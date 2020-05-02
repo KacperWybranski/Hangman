@@ -9,20 +9,29 @@
 import UIKit
 
 class ViewController: UIViewController {
-    var currentWord: UITextField!
+    var currentWord: UILabel!
     var currentLetter: UITextField!
     var buttonsView: UIView!
     var loadingView: UIView!
     var letterButtons = [UIButton]()
+    let wordsToGuess: [String] = ["KACZKA","PIES"]
+    var activeButtons = [UIButton]() {
+        didSet {
+            for btn in activeButtons {
+                btn.isHidden = true
+            }
+        }
+    }
+    var answer: String!
+    var hiddenAnswer: String!
     
     override func loadView() {
         view = UIView()
         view.backgroundColor = .white
         
-        currentWord = UITextField()
+        currentWord = UILabel()
         currentWord.translatesAutoresizingMaskIntoConstraints = false
-        currentWord.placeholder = "Hello"
-        currentWord.isUserInteractionEnabled = false
+        currentWord.text = "Hello"
         currentWord.font = UIFont.systemFont(ofSize: 50)
         currentWord.textAlignment = .center
         view.addSubview(currentWord)
@@ -54,6 +63,7 @@ class ViewController: UIViewController {
         
         createLetterButtons()
         createLoadingPieces()
+        startGame()
     }
     
     override func viewDidLoad() {
@@ -81,6 +91,7 @@ class ViewController: UIViewController {
         letterButton.layer.backgroundColor = UIColor.systemGray6.cgColor
         
         letterButtons += [letterButton]
+        letterButton.addTarget(self, action: #selector(letterTapped), for: .touchUpInside)
         buttonsView.addSubview(letterButton)
     }
     
@@ -126,6 +137,31 @@ class ViewController: UIViewController {
             
             loadingView.addSubview(loadingPiece)
         }
+    }
+    
+    func startGame() {
+        answer = wordsToGuess.randomElement()?.lowercased()
+        hiddenAnswer = ""
+        
+        for _ in answer {
+            hiddenAnswer += "-"
+        }
+        currentWord.text = hiddenAnswer
+        activeButtons.removeAll()
+    }
+    
+    @objc func letterTapped(_ sender: UIButton) {
+        activeButtons += [sender]
+        if let btn = sender.titleLabel?.text?.lowercased() {
+            for (i, ltr) in answer.enumerated() {
+                if ltr == Character(btn) {
+                    letterGuessed(letter: ltr, index: i)
+                }
+            }
+        }
+    }
+    
+    func letterGuessed(letter: Character, index: Int) {
     }
 }
 
