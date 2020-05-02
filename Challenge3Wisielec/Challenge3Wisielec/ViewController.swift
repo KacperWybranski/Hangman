@@ -23,7 +23,11 @@ class ViewController: UIViewController {
         }
     }
     var answer: String!
-    var hiddenAnswer: String!
+    var hiddenAnswer: String! {
+        didSet {
+            currentWord.text = hiddenAnswer
+        }
+    }
     
     override func loadView() {
         view = UIView()
@@ -146,7 +150,7 @@ class ViewController: UIViewController {
         for _ in answer {
             hiddenAnswer += "-"
         }
-        currentWord.text = hiddenAnswer
+        
         activeButtons.removeAll()
     }
     
@@ -156,12 +160,18 @@ class ViewController: UIViewController {
             for (i, ltr) in answer.enumerated() {
                 if ltr == Character(btn) {
                     letterGuessed(letter: ltr, index: i)
+                } else {
+                    letterMissed()
                 }
             }
         }
     }
     
     func letterGuessed(letter: Character, index: Int) {
+    }
+    
+    func letterMissed() {
+        
     }
 }
 
