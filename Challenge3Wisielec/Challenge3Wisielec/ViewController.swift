@@ -28,6 +28,8 @@ class ViewController: UIViewController {
             currentWord.text = hiddenAnswer
         }
     }
+    var loadingPieces = [UIButton]()
+    var redPieces: Int = 0
     
     override func loadView() {
         view = UIView()
@@ -138,7 +140,9 @@ class ViewController: UIViewController {
             loadingPiece.layer.backgroundColor = UIColor.systemGreen.cgColor
             loadingPiece.layer.borderWidth = 2
             loadingPiece.layer.borderColor = UIColor.systemGray.cgColor
+            loadingPiece.isUserInteractionEnabled = false
             
+            loadingPieces += [loadingPiece]
             loadingView.addSubview(loadingPiece)
         }
     }
@@ -160,18 +164,26 @@ class ViewController: UIViewController {
             for (i, ltr) in answer.enumerated() {
                 if ltr == Character(btn) {
                     letterGuessed(letter: ltr, index: i)
-                } else {
-                    letterMissed()
+                    return
                 }
             }
+            letterMissed()
         }
     }
     
     func letterGuessed(letter: Character, index: Int) {
+        
     }
     
     func letterMissed() {
-        
+        redPieces += 1
+        if redPieces <= 7 {
+        loadingPieces[redPieces-1].layer.backgroundColor = UIColor.systemRed.cgColor
+        } else {
+            let ac = UIAlertController(title: "THE END", message: "Postaraj sie nastepnym razem", preferredStyle: .alert)
+            ac.addAction(UIAlertAction(title: "OK", style: .cancel))
+            present(ac, animated: true)
+        }
     }
 }
 
