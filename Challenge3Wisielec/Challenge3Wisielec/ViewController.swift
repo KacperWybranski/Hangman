@@ -14,7 +14,11 @@ class ViewController: UIViewController {
     var buttonsView: UIView!
     var loadingView: UIView!
     var letterButtons = [UIButton]()
-    let wordsToGuess: [String] = ["KACZKA","PIES"]
+    let wordsToGuess: [String] = ["KACZKA","PIES","OKO","KOTECZEK","AUTO","ZAMEK"]
+    var answer: String!
+    var loadingPieces = [UIButton]()
+    var redPieces: Int = 0
+    
     var activeButtons = [UIButton]() {
         didSet {
             for btn in activeButtons {
@@ -22,14 +26,15 @@ class ViewController: UIViewController {
             }
         }
     }
-    var answer: String!
+    
     var hiddenAnswer: String! {
         didSet {
             currentWord.text = hiddenAnswer
+            if hiddenAnswer == answer {
+                gameWon()
+            }
         }
     }
-    var loadingPieces = [UIButton]()
-    var redPieces: Int = 0
     
     override func loadView() {
         view = UIView()
@@ -118,7 +123,7 @@ class ViewController: UIViewController {
             }
         }
        
-        let qwerty = ["q","w","e","r","t","y","u","i","o","p","a","s","d","f","g","h","j","k","l","z","x","c","v","b","n","m"]
+        let qwerty = ["Q","W","E","R","T","Y","U","I","O","P","A","S","D","F","G","H","J","K","L","Z","X","C","V","B","N","M"]
        
         if qwerty.count == letterButtons.count {
             for (i, btn) in letterButtons.enumerated() {
@@ -148,42 +153,73 @@ class ViewController: UIViewController {
     }
     
     func startGame() {
-        answer = wordsToGuess.randomElement()?.lowercased()
+        redPieces = 0
+        for btn in loadingPieces {
+            btn.layer.backgroundColor = UIColor.systemGreen.cgColor
+        }
+        answer = wordsToGuess.randomElement()
         hiddenAnswer = ""
         
         for _ in answer {
             hiddenAnswer += "-"
         }
         
+        for btn in activeButtons {
+            btn.isHidden = false
+        }
         activeButtons.removeAll()
     }
     
     @objc func letterTapped(_ sender: UIButton) {
+        var letterFound: Bool = false
         activeButtons += [sender]
-        if let btn = sender.titleLabel?.text?.lowercased() {
+        if let btn = sender.titleLabel?.text {
             for (i, ltr) in answer.enumerated() {
                 if ltr == Character(btn) {
-                    letterGuessed(letter: ltr, index: i)
-                    return
+                    letterFind(letter: ltr, index: i)
+                    letterFound = true
                 }
             }
-            letterMissed()
+            if !letterFound {
+                letterMissed()
+            }
         }
     }
     
-    func letterGuessed(letter: Character, index: Int) {
-        
+    func letterFind(letter: Character, index: Int) {
+        var tmpAnswer = ""
+        for (i, chr) in hiddenAnswer.enumerated() {
+            if i == index {
+                if chr == "-" {
+                    tmpAnswer += String(letter)
+                }
+            } else {
+                tmpAnswer += String(chr)
+            }
+        }
+        hiddenAnswer = tmpAnswer
     }
     
     func letterMissed() {
         redPieces += 1
-        if redPieces <= 7 {
         loadingPieces[redPieces-1].layer.backgroundColor = UIColor.systemRed.cgColor
+        if redPieces < 7 {
+            return
         } else {
-            let ac = UIAlertController(title: "THE END", message: "Postaraj sie nastepnym razem", preferredStyle: .alert)
-            ac.addAction(UIAlertAction(title: "OK", style: .cancel))
+            let ac = UIAlertController(title: "Przegrałeś!", message: "Spróbuj jeszcze raz", preferredStyle: .alert)
+            ac.addAction(UIAlertAction(title: "OK", style: .cancel) { [weak self] action in
+                self?.startGame()
+                })
             present(ac, animated: true)
         }
+    }
+    
+    func gameWon() {
+        let ac = UIAlertController(title: "BRAWO :D", message: "Udało ci się odgadnąć :)", preferredStyle: .alert)
+        ac.addAction(UIAlertAction(title: "OK", style: .cancel) { [weak self] action in
+            self?.startGame()
+        })
+        present(ac, animated: true)
     }
 }
 
