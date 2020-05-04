@@ -14,10 +14,17 @@ class ViewController: UIViewController {
     var buttonsView: UIView!
     var loadingView: UIView!
     var letterButtons = [UIButton]()
-    let wordsToGuess: [String] = ["KACZKA","PIES","OKO","KOTECZEK","AUTO","ZAMEK"]
+    var scoreLabel: UILabel!
+    let wordsToGuess: [String] = ["KWADRAT","MYSZ","KWIATUSZEK","STRONA","HERBATA","MAKARON"]
+    var wordsToGuessWithoutAlreadyGuessed = [String]()
     var answer: String!
     var loadingPieces = [UIButton]()
     var redPieces: Int = 0
+    var score: Int = 0 {
+        didSet {
+            scoreLabel.text = "Wynik: \(score)"
+        }
+    }
     
     var activeButtons = [UIButton]() {
         didSet {
@@ -31,7 +38,7 @@ class ViewController: UIViewController {
         didSet {
             currentWord.text = hiddenAnswer
             if hiddenAnswer == answer {
-                gameWon()
+                wordFound()
             }
         }
     }
@@ -46,6 +53,13 @@ class ViewController: UIViewController {
         currentWord.font = UIFont.systemFont(ofSize: 50)
         currentWord.textAlignment = .center
         view.addSubview(currentWord)
+        
+        scoreLabel = UILabel()
+        scoreLabel.translatesAutoresizingMaskIntoConstraints = false
+        scoreLabel.text = "Wynik: \(score)"
+        scoreLabel.font = UIFont.boldSystemFont(ofSize: 20)
+        scoreLabel.textAlignment = .right
+        view.addSubview(scoreLabel)
         
         buttonsView = UIView()
         buttonsView.translatesAutoresizingMaskIntoConstraints = false
@@ -69,6 +83,9 @@ class ViewController: UIViewController {
             loadingView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             loadingView.widthAnchor.constraint(equalToConstant: 350),
             loadingView.heightAnchor.constraint(equalToConstant: 80),
+            
+            scoreLabel.topAnchor.constraint(equalTo: view.layoutMarginsGuide.topAnchor, constant: 20),
+            scoreLabel.trailingAnchor.constraint(equalTo: view.layoutMarginsGuide.trailingAnchor),
             
         ])
         
@@ -153,21 +170,35 @@ class ViewController: UIViewController {
     }
     
     func startGame() {
+        wordsToGuessWithoutAlreadyGuessed = wordsToGuess
+        score = 0
+        
+        continueGame()
+    }
+    
+    func continueGame() {
         redPieces = 0
         for btn in loadingPieces {
             btn.layer.backgroundColor = UIColor.systemGreen.cgColor
         }
-        answer = wordsToGuess.randomElement()
-        hiddenAnswer = ""
         
-        for _ in answer {
-            hiddenAnswer += "-"
+        if !wordsToGuessWithoutAlreadyGuessed.isEmpty {
+            let numbers: Range<Int> = 0..<wordsToGuessWithoutAlreadyGuessed.count
+            guard let randomNumber = numbers.randomElement() else { return }
+            answer = wordsToGuessWithoutAlreadyGuessed.remove(at: randomNumber)
+            hiddenAnswer = ""
+            
+            for _ in answer {
+                hiddenAnswer += "-"
+            }
+            
+            for btn in activeButtons {
+                btn.isHidden = false
+            }
+            activeButtons.removeAll()
+        } else {
+            gameEnded()
         }
-        
-        for btn in activeButtons {
-            btn.isHidden = false
-        }
-        activeButtons.removeAll()
     }
     
     @objc func letterTapped(_ sender: UIButton) {
@@ -206,17 +237,39 @@ class ViewController: UIViewController {
         if redPieces < 7 {
             return
         } else {
-            let ac = UIAlertController(title: "Przegrałeś!", message: "Spróbuj jeszcze raz", preferredStyle: .alert)
+            let message = """
+            Hasło to \(answer ?? "hasło")
+            Spróbuj jeszcze raz :)
+            """
+            let ac = UIAlertController(title: "Nie odgadłeś!", message: message, preferredStyle: .alert)
             ac.addAction(UIAlertAction(title: "OK", style: .cancel) { [weak self] action in
-                self?.startGame()
+                self?.continueGame()
                 })
             present(ac, animated: true)
         }
     }
     
-    func gameWon() {
+    func wordFound() {
+        score += 1
         let ac = UIAlertController(title: "BRAWO :D", message: "Udało ci się odgadnąć :)", preferredStyle: .alert)
         ac.addAction(UIAlertAction(title: "OK", style: .cancel) { [weak self] action in
+            self?.continueGame()
+        })
+        present(ac, animated: true)
+    }
+    
+    func gameEnded() {
+        var pronounce = String()
+        switch score {
+        case 1:
+            pronounce = "słowo"
+        case 2...4:
+            pronounce = "słowa"
+        default:
+            pronounce = "słów"
+        }
+        let ac = UIAlertController(title: "Koniec gry!", message: "Odgadłeś \(score) \(pronounce) z \(wordsToGuess.count) :)", preferredStyle: .alert)
+        ac.addAction(UIAlertAction(title: "Gram od nowa!", style: .cancel) { [weak self] action in
             self?.startGame()
         })
         present(ac, animated: true)
